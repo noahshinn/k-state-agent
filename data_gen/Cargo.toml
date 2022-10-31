@@ -1,0 +1,12 @@
+[package]
+name = "data_gen"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+apca = "0.25.1"
+futures = "0.3.25"
+clap = { version = "4.0.18", features = ["derive"] }

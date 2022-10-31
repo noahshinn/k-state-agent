@@ -1,0 +1,4 @@
+(executable
+ (public_name k_state_gen)
+ (name main)
+ (libraries k_state_gen csv))
