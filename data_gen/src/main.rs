@@ -5,14 +5,15 @@ use apca::data::v2::stream::IEX;
 use apca::ApiInfo;
 use apca::Client;
 use apca::Error;
-use apca::Subscribable::Stream;
+use clap::Parser;
 use futures::FutureExt as _;
 use futures::StreamExt as _;
 use futures::TryStreamExt as _;
 use tokio;
 
-static DEFAULT_HISTORY: usize = 50; // number of points captured per stream
-static DEFAULT_DELAY: usize = 60; // delay between streams per second
+static DEFAULT_NHISTORY: usize = 50; // number of points captured per stream
+static DEFAULT_DATAPOINTS: usize = 1; // number of streams captured per run
+static DEFAULT_TDELAY: u64 = 60; // delay between streams per second
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -20,47 +21,14 @@ struct Args {
     #[arg(short, long)]
     symbols: String,
 
-    #[arg(short, long, default_value_t = DEFAULT_HISTORY)]
-    history: usize,
+    #[arg(short, long, default_value_t = DEFAULT_DATAPOINTS)]
+    datapoints: usize,
 
-    #[arg(short, long, default_value_t = DEFAULT_DELAY)]
-    delay: usize,
-}
+    #[arg(short, long, default_value_t = DEFAULT_NHISTORY)]
+    nhistory: usize,
 
-async fn stream_once(stream: Stream, history: usize) -> Vec<String> {
-    let () = drive(subscribe, &mut stream)
-        .await
-        .unwrap()
-        .unwrap()
-        .unwrap();
-
-    let mut res: Vec<String> = Vec::with_capacity(history);
-    let () = stream
-        .take(history)
-        .map_err(Error::WebSocket)
-        .try_for_each(|result| async {
-            for (i, data) in result.iter().enumerate() {
-                res[i] = data;
-                println!("{:?}", data);
-            }
-            //result
-            //.map(|data| println!("{:?}", data))
-            //.map_err(Error::Json)
-        })
-        .await
-        .unwrap();
-    res
-}
-
-async fn stream(stream: Stream, history: usize, delay: usize) -> Vec<Vec<String>> {
-    let mut delay = tokio::time::interval(std::time::Duration::from_secs(delay));
-    let mut i = 0;
-    let mut res: Vec<Vec<String>> = Vec::with_capacity(history);
-    while i < len {
-        delay.tick().await;
-        res[i] = stream_once(stream, history).await;
-    }
-    res
+    #[arg(short, long, default_value_t = DEFAULT_TDELAY)]
+    tdelay: u64,
 }
 
 #[tokio::main]
@@ -69,13 +37,37 @@ async fn main() {
 
     let api_info = ApiInfo::from_env().unwrap();
     let client = Client::new(api_info);
-    let (mut stream, mut subscription) = client.subscribe::<RealtimeData<IEX>>().await.unwrap();
     let mut data = MarketData::default();
+    let mut delay = tokio::time::interval(std::time::Duration::from_secs(args.tdelay));
 
     data.set_bars(["SPY", "XLK"]);
-    data.set_quotes(args.symbols.split(" ").collect());
+    //data.set_quotes(args.symbols.split(" ").collect());
+    data.set_quotes(["AAPL"]);
 
-    let res = stream(args.history, args.delay);
+    let mut i = 0;
+    let mut _stream_res: Vec<Vec<String>> = Vec::with_capacity(args.datapoints);
+    while i < args.datapoints {
+        let (mut stream, mut subscription) = client.subscribe::<RealtimeData<IEX>>().await.unwrap();
+        let subscribe = subscription.subscribe(&data).boxed();
+        delay.tick().await;
+        let () = drive(subscribe, &mut stream)
+            .await
+            .unwrap()
+            .unwrap()
+            .unwrap();
+
+        let () = stream
+            .take(args.nhistory)
+            .map_err(Error::WebSocket)
+            .try_for_each(|result| async {
+                result
+                    .map(|data| println!("{:?}", data))
+                    .map_err(Error::Json)
+            })
+            .await
+            .unwrap();
+        i = i + 1;
+    }
 
     // TODO: write data to csv file
 }
