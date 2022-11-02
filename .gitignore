@@ -41,3 +41,6 @@ setup.log
 
 # Local OPAM switch
 _opam/
+
+# scratch files
+**/*.py

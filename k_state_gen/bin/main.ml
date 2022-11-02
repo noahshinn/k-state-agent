@@ -2,14 +2,23 @@
 (*let () = Csv.print_readable string*)
 
 open Printf
-(*open Float*)
+open Float
 
-let eucl_dist t1 t2 = Float.sqrt (float_of_int (List.fold_left (fun s -> fun x -> s + x * x) 0 (List.map2 (-) t1 t2)))
-let () = printf "%f" (eucl_dist [ 2;2;1 ] [ 5;6;0 ])
+(*computer.ml*)
+module Computer = struct
+  let normalize t1 =
+    (*let div n k = (n / k) + (n mod k) in*)
+    let max_ = List.fold_left max (List.hd t1) (List.tl t1) in
+    let min_ = List.fold_left min (List.hd t1) (List.tl t1) in
+    List.map (fun a -> div a max_) (List.map (fun b -> sub b min_) t1)
+  end;;
 
-  (*List.fold_left*)
+(*loaders.ml*)
+(*module Loader = struct*)
+  (*let load_csv path = Csv.load*)
+  (*end;;*)
 
-    (*(fun s x -> s + (x * x))*)
-    (*0 (List.map2 ( - ) t1 t2) printf eucl_dist [ 0; 0; 0 ] [ 2; 2; 2 ]*)
+let () =
+  List.iter (printf "%f ") (Computer.normalize (List.map float_of_int [ 0; 1; 2 ]))
 
 (** k-means classification + model-based RL agent *)
