@@ -1,6 +1,16 @@
 # k-state-agent
 A model-free agent trained to act optimally over an unsupervised-generated temporal state space written in Ocaml and Rust.
 
+## Installation
+Build from source:
+```
+git clone https://noahshinn024/k-state-agent
+```
+run `make`
+```
+cd k-state-agent && make
+```
+
 ## Implemented
   - data streaming + capturing
   - state normalization
