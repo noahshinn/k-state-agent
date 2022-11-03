@@ -1,4 +1,4 @@
-module QLearningUtils = struct
+module QLearning = struct
   (*determines the next decision
     exploit: true
     explore: false
