@@ -5,7 +5,8 @@ module Stategen = struct
     match lst with
     | [] -> []
     | [] :: xss -> transpose xss
-    | (x :: xs) :: xss -> List.((x :: map hd xss) :: transpose (xs :: map tl xss))
+    | (x :: xs) :: xss ->
+        List.((x :: map hd xss) :: transpose (xs :: map tl xss))
 
   let mean_state (state_lst : float list list list) : float list list =
     let mean (t1 : float list) : float =
@@ -20,7 +21,9 @@ module Stategen = struct
   let normalize t1 =
     let max_ = List.fold_left max (List.hd t1) (List.tl t1) in
     let min_ = List.fold_left min (List.hd t1) (List.tl t1) in
-    List.map (fun a -> Float.div a max_) (List.map (fun b -> Float.sub b min_) t1)
+    List.map
+      (fun a -> Float.div a max_)
+      (List.map (fun b -> Float.sub b min_) t1)
 
   let rand_lst (dim0 : int) (dim1 : int) (dim2 : int) : float list list list =
     let rec rand_float_lst (acc : float list) (count : int) : float list =
@@ -39,7 +42,8 @@ module Stategen = struct
         float list list list =
       match count with
       | c when c == 0 -> acc
-      | _ -> rand_float_lst_lst_lst (rand_float_lst_lst [] dim1 :: acc) (count - 1)
+      | _ ->
+          rand_float_lst_lst_lst (rand_float_lst_lst [] dim1 :: acc) (count - 1)
     in
     rand_float_lst_lst_lst [] dim0
 
@@ -76,8 +80,10 @@ module Stategen = struct
       | _ ->
           let cur_dist : float = state_eucl_dist s1 (List.hd centr_lst) in
           if cur_dist < closest_dist then
-            get_closest_centr s1 (List.tl centr_lst) (List.hd centr_lst) cur_dist
-          else get_closest_centr s1 (List.tl centr_lst) closest_centr closest_dist
+            get_closest_centr s1 (List.tl centr_lst) (List.hd centr_lst)
+              cur_dist
+          else
+            get_closest_centr s1 (List.tl centr_lst) closest_centr closest_dist
     in
 
     let get_centr (centr : float list list list) : float list list list =
@@ -110,5 +116,7 @@ module Stategen = struct
       | n when n == niter -> centr
       | _ -> k_means_iter (get_centr centr) (iter - 1)
     in
+
     let init_centr : float list list list = rand_lst k dim1 dim2 in
     k_means_iter init_centr niter
+end
