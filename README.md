@@ -4,7 +4,7 @@ A model-free agent trained to act optimally over an unsupervised-generated tempo
 ## Installation
 Build from source:
 ```
-git clone https://noahshinn024/k-state-agent
+git clone https://github.com/noahshinn024/k-state-agent
 ```
 run `make`
 ```
