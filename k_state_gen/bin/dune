@@ -1,4 +1,5 @@
 (executable
  (public_name k_state_gen)
  (name main)
- (libraries csv lib))
+ (libraries csv lib)
+ (modules main state_gen agent))

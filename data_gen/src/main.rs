@@ -69,5 +69,5 @@ async fn main() {
         i = i + 1;
     }
 
-    // TODO: write data to csv file
+    // TODO: write data to json
 }
