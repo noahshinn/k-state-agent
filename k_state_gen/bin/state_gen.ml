@@ -1,4 +1,4 @@
-exception Max_Nstructures_Exceeded
+exception MaxNstructuresExceeded
 
 module Stategen = struct
   let rec transpose lst =
@@ -62,7 +62,7 @@ module Stategen = struct
       let nstructures = List.length structures in
       if nstructures > 100_000 then
         print_string "max number of structures is 100_000 ";
-      raise Max_Nstructures_Exceeded
+      raise MaxNstructuresExceeded
     in
     let dim1 : int = List.length (List.hd structures) in
     let dim2 : int = List.length (List.hd (List.hd structures)) in

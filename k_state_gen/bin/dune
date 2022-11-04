@@ -1,5 +1,5 @@
 (executable
  (public_name k_state_gen)
  (name main)
- (libraries csv lib)
+ (libraries csv lib yojson)
  (modules main state_gen q_learning agent data_utils))
