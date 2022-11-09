@@ -170,14 +170,6 @@ module StateGeneration = struct
 end
 
 module QLearning = struct
-  (*determines the next decision
-    exploit: true
-    explore: false
-  *)
-  let exec_eps_greedy (eps : float) : bool =
-    let () = assert (eps <= 1.0 && eps <= 1.0) in
-    Random.float 1.0 > eps
-
   (*classifies a structure to its nearest state*)
   let structure_to_state (structure : float list list)
       (states : float list list list)
@@ -189,18 +181,67 @@ module QLearning = struct
         float list list =
       match states_lst with
       | [] -> cur_nearest_state
-      | _ ->
-          let cur_state = List.hd states_lst in
-          let nearness = similarity_func structure cur_state in
+      | s :: rest_states ->
+          let nearness = similarity_func structure s in
           if nearness < cur_min_nearness then
-            structure_to_state_iter (List.tl states_lst) cur_state nearness
+            structure_to_state_iter rest_states s nearness
           else
-            structure_to_state_iter (List.tl states_lst) cur_nearest_state
+            structure_to_state_iter rest_states cur_nearest_state
               cur_min_nearness
     in
     let first_state = List.hd states in
     structure_to_state_iter (List.tl states) first_state
       (similarity_func structure first_state)
+
+  (*TODO: add hash type*)
+  (*TODO: move action definition*)
+  (*returns max_action Q(state,action) where the max is over legal actions.*)
+  let compute_value_from_q_values (state : float list list) q_values : float =
+    let actions = "BUY" :: "SELL" :: [ "HOLD" ] in
+    let rec compute_value_from_q_values_inner actions (cur_max_val : float) =
+      match actions with
+      | [] -> cur_max_val
+      | a :: rest_actions ->
+          compute_value_from_q_values_inner rest_actions
+            (Float.max cur_max_val (Hashtbl.find q_values (state, a)))
+    in
+    compute_value_from_q_values_inner actions Float.neg_infinity
+
+  (*compute the best action to take in a state.*)
+  let compute_action_from_q_values (state : float list list) q_values : string =
+    let actions = "BUY" :: "SELL" :: [ "HOLD" ] in
+    let rec compute_action_from_q_values_inner actions (cur_max_val : float)
+        (cur_max_action : string) : string =
+      match actions with
+      | [] -> cur_max_action
+      | a :: rest_actions ->
+          let q_val = Hashtbl.find q_values (state, a) in
+          if q_val > cur_max_val then
+            compute_action_from_q_values_inner rest_actions q_val a
+          else
+            compute_action_from_q_values_inner rest_actions cur_max_val
+              cur_max_action
+    in
+    compute_action_from_q_values_inner (List.tl actions) Float.neg_infinity
+      "BUY"
+
+  (* compute the action to take in the current state
+     with probability self.epsilon take a random action or
+     take the best policy action otherwise
+  *)
+  let get_action (state : float list list) (eps : float) q_values : string =
+    (*determines the next decision
+      exploit: true
+      explore: false
+    *)
+    let actions = "BUY" :: "SELL" :: [ "HOLD" ] in
+    let exec_eps_greedy_decision : bool =
+      let () = assert (eps <= 1.0 && eps <= 1.0) in
+      Random.float 1.0 > eps
+    in
+    if exec_eps_greedy_decision then
+      List.nth actions (Random.int (List.length actions))
+    else compute_action_from_q_values state q_values
 
   (* updates the current Q value given precomputed values
      Follows the formula Q(s, a) <-- Q(s, a) + \alpha * [R + \gamma * max_over_a\'[Q(s\', a\')]  - Q(s, a)]
@@ -213,11 +254,11 @@ module QLearning = struct
        \alpha = learning rate
        \gamma = discount factor
   *)
-  let compute_q_update (cur_q : float) (opt_next_q : float) (reward : float)
+  let compute_q_update (cur_q : float) (next_q : float) (reward : float)
       (alpha : float) (gamma : float) : float =
     Float.add cur_q
       (Float.mul alpha
-         (Float.sub (Float.add reward (Float.mul gamma opt_next_q)) cur_q))
+         (Float.sub (Float.add reward (Float.mul gamma next_q)) cur_q))
 end
 
 let () =
