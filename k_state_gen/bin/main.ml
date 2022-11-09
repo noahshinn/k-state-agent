@@ -196,8 +196,8 @@ module QLearning = struct
   (*TODO: add hash type*)
   (*TODO: move action definition*)
   (*returns max_action Q(state,action) where the max is over legal actions.*)
-  let compute_value_from_q_values (state : float list list) q_values : float =
-    let actions = "BUY" :: "SELL" :: [ "HOLD" ] in
+  let compute_value_from_q_values (state : float list list)
+      (actions : string list) q_values : float =
     let rec compute_value_from_q_values_inner actions (cur_max_val : float) =
       match actions with
       | [] -> cur_max_val
@@ -208,8 +208,8 @@ module QLearning = struct
     compute_value_from_q_values_inner actions Float.neg_infinity
 
   (*compute the best action to take in a state.*)
-  let compute_action_from_q_values (state : float list list) q_values : string =
-    let actions = "BUY" :: "SELL" :: [ "HOLD" ] in
+  let compute_action_from_q_values (state : float list list)
+      (actions : string list) q_values : string =
     let rec compute_action_from_q_values_inner actions (cur_max_val : float)
         (cur_max_action : string) : string =
       match actions with
@@ -229,12 +229,12 @@ module QLearning = struct
      with probability self.epsilon take a random action or
      take the best policy action otherwise
   *)
-  let get_action (state : float list list) (eps : float) q_values : string =
+  let get_action (state : float list list) (actions : string list) (eps : float)
+      q_values : string =
     (*determines the next decision
       exploit: true
       explore: false
     *)
-    let actions = "BUY" :: "SELL" :: [ "HOLD" ] in
     let exec_eps_greedy_decision : bool =
       let () = assert (eps <= 1.0 && eps <= 1.0) in
       Random.float 1.0 > eps
@@ -259,6 +259,28 @@ module QLearning = struct
     Float.add cur_q
       (Float.mul alpha
          (Float.sub (Float.add reward (Float.mul gamma next_q)) cur_q))
+
+  (* figure out how to execute action a in state s in environment *)
+  let exec_env (state : float list list) (action : string) =
+    ([ [ 0.0 ]; [ 0.0 ] ], 0.0)
+
+  let train (init_structure : float list list) (actions : string list)
+      (alpha : float) (gamma : float) (eps : float) (niter : int)
+      =
+    let rec train_iter (state : float list list) q_values (iter : int) =
+      match iter with
+      | n when n == niter -> q_values
+      | _ ->
+          let a = get_action state actions eps q_values in
+          let next_state reward = exec_env state a in
+          let next_q_val = compute_value_from_q_values state actions q_values
+          let new_q_val = compute_q_update (Hashtbl.find q_values (state, a)) next_q_val reward alpha gamma in
+          in
+          if Hashtbl.mem q_values (state, a) then
+            Hashtbl.replace q_values (state, a) new_q_val
+          else Hashtbl.add q_values (state, a) new_q_val
+    in
+    train_iter (structure_to_state init_structure) (Hashtbl.create 123456) 0
 end
 
 let () =
