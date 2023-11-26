@@ -7,7 +7,7 @@ An experiment for state classification.
 Build from source:
 
 ```bash
-git clone https://github.com/noahshinn024/k-state-agent
+git clone https://github.com/noahshinn/k-state-agent
 ```
 
 run `make`
